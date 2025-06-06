@@ -8,9 +8,14 @@ Created on Fri Jun  6 16:49:14 2025
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from PIL import Image
 import joblib
 import shap
+
+# 设置中文字体
+plt.rcParams["font.family"] = ["SimHei", "WenQuanYi Micro Hei", "Heiti TC"]
+plt.rcParams["axes.unicode_minus"] = False  # 解决负号显示问题
 
 # 加载模型
 model_path = "stacking_regressor_model.pkl"
@@ -33,7 +38,7 @@ Resilience = st.sidebar.number_input("Resilience (范围: 6-36)", min_value=6, m
 Depression = st.sidebar.number_input("Depression (范围: 0-3)", min_value=0, max_value=3, value=3)
 Anxiety = st.sidebar.number_input("Anxiety (范围: 0-3)", min_value=0, max_value=3, value=3)
 Family_support = st.sidebar.number_input("Family support (范围: 0-10)", min_value=0, max_value=10, value=5)
-Age = st.sidebar.number_input("Age (范围: 21-63)", min_value=21, max_value=63, value=21)  # 修正为 number_input
+Age = st.sidebar.number_input("Age (范围: 21-63)", min_value=21, max_value=63, value=21)
 Occupation = st.sidebar.selectbox("Occupation", options=["Full-time job", "Part-time job"])
 Method_of_delivery = st.sidebar.selectbox("Method of delivery", options=["Vaginal delivery", "Cesarean section"])
 Marital_status = st.sidebar.selectbox("Marital status", options=["Married", "Unmarried"])
@@ -58,7 +63,7 @@ if predict_button:
         # 将输入特征转换为模型所需格式
         input_array = np.array([
             Resilience, Depression, Anxiety, Family_support, Age, Intrapartum_pain, Postpartum_pain,
-            # 对于分类特征，需要将其转换为数值（例如通过编码）
+            # 对于分类特征，需要将其转换为数值
             1 if Occupation == "Full-time job" else 0,
             1 if Method_of_delivery == "Vaginal delivery" else 0,
             1 if Marital_status == "Married" else 0,
@@ -83,18 +88,50 @@ if predict_button:
         st.write("根据用户输入的数值生成的单个样本 SHAP 瀑布图，用于解释特征对预测结果的贡献。")
         st.write("注意：由于回归模型不能输出预测概率，因此 SHAP 分析基于模型的预测值进行解释。")
 
-        # 计算 SHAP 值
-        explainer = shap.Explainer(stacking_regressor)
-        shap_values = explainer(input_array)
+        # 创建SHAP解释器并计算SHAP值
+        try:
+            # 尝试使用TreeExplainer (适用于树模型)
+            explainer = shap.TreeExplainer(stacking_regressor)
+            shap_values = explainer.shap_values(input_array)
+        except:
+            # 如果TreeExplainer失败，使用通用的KernelExplainer
+            explainer = shap.KernelExplainer(stacking_regressor.predict, input_array)
+            shap_values = explainer.shap_values(input_array)
 
-        # 绘制 SHAP 瀑布图
-        shap.plots.waterfall(shap_values[0], show=False)
-        st.pyplot()
+        # 特征名称列表
+        feature_names = [
+            "Resilience", "Depression", "Anxiety", "Family_support", "Age", 
+            "Intrapartum_pain", "Postpartum_pain", "Occupation", 
+            "Method_of_delivery", "Marital_status", "Educational_degree",
+            "Average_monthly_household_income", "Medical_insurance",
+            "Mode_of_conception", "Pregnancy_complications", "Breastfeeding",
+            "Rooming_in", "Planned_pregnancy"
+        ]
+
+        # 确保shap_values格式正确
+        if isinstance(shap_values, list):
+            shap_values = shap_values[0]
+
+        # 创建画布
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        # 绘制SHAP瀑布图
+        shap.waterfall_plot(
+            shap.Explanation(
+                values=shap_values[0], 
+                base_values=explainer.expected_value,
+                data=input_array[0],
+                feature_names=feature_names
+            ),
+            max_display=18,
+            show=False
+        )
+        
+        # 显示图形
+        st.pyplot(fig)
 
     except Exception as e:
         st.error(f"预测时发生错误：{e}")
-        
-        
         
 # 可视化展示
 st.header("SHAP 可视化分析")
@@ -140,4 +177,4 @@ st.write("""
 1. 使用输入特征值进行实时预测。
 2. 直观地理解第一层基学习器、第二层元学习器以及整体 Stacking 模型的特征贡献情况。
 这些分析有助于深入理解模型的预测逻辑和特征的重要性。
-""")
+""")    
