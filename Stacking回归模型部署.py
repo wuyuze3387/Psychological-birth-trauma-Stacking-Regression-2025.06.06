@@ -139,15 +139,6 @@ st.write("""
 以下图表展示了模型的 SHAP 分析结果，包括第一层基学习器、第二层元学习器以及整个 Stacking 模型的特征贡献。
 """)
 
-# 第一层基学习器 SHAP 可视化
-st.subheader("1. 第一层基学习器")
-st.write("基学习器的特征贡献分析。")
-first_layer_img = "summary_plot.png"
-try:
-    img1 = Image.open(first_layer_img)
-    st.image(img1, caption="第一层基学习器的 SHAP 贡献分析", use_container_width=True)
-except FileNotFoundError:
-    st.warning("未找到第一层基学习器的 SHAP 图像文件。")
 
 # 整体 Stacking 模型 SHAP 可视化
 st.subheader("3. 整体 Stacking 模型")
@@ -159,12 +150,3 @@ try:
 except FileNotFoundError:
     st.warning("未找到整体 Stacking 模型的 SHAP 图像文件。")
 
-# 页脚
-st.markdown("---")
-st.header("总结")
-st.write("""
-通过本页面，您可以：
-1. 使用输入特征值进行实时预测。
-2. 直观地理解第一层基学习器、第二层元学习器以及整体 Stacking 模型的特征贡献情况。
-这些分析有助于深入理解模型的预测逻辑和特征的重要性。
-""")    
