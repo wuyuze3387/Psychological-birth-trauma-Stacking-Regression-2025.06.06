@@ -149,16 +149,6 @@ try:
 except FileNotFoundError:
     st.warning("未找到第一层基学习器的 SHAP 图像文件。")
 
-# 第二层元学习器 SHAP 可视化
-st.subheader("2. 第二层元学习器")
-st.write("元学习器（Linear Regression）的输入特征贡献分析。")
-meta_layer_img = "SHAP Contribution Analysis for the Meta-Learner in the Second Layer of Stacking Regressor.png"
-try:
-    img2 = Image.open(meta_layer_img)
-    st.image(img2, caption="第二层元学习器的 SHAP 贡献分析", use_container_width=True)
-except FileNotFoundError:
-    st.warning("未找到第二层元学习器的 SHAP 图像文件。")
-
 # 整体 Stacking 模型 SHAP 可视化
 st.subheader("3. 整体 Stacking 模型")
 st.write("整个 Stacking 模型的特征贡献分析。")
